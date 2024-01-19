@@ -1,0 +1,6 @@
+# Extentions
+*.pdb
+
+# Folders
+bin/**
+obj/**
