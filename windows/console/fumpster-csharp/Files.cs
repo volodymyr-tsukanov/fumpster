@@ -5,22 +5,28 @@ using System.IO;
 namespace Fumpster.Files
 {
 	/// <summary>
-	/// DumpedFile (20/01/2024)
+	/// DumpedFile (21/01/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class DumpedFile {
-		string path, sourcePath;
+		short reputation;
+		long id;
+		string sourcePath;
 
-		public string Path { get{ return path; } set{ path = value; } }
+		protected internal const short REPUTATION_RESTORED = -7018, REPUTATION_DUMPED = 10;
+
+		public short Reputation { get{ return reputation; } }
+		public long Id { get{ return id; } }
 		public string SorcePath { get{ return sourcePath; } }
-		public bool IsDumped { get{ return !path.Equals(sourcePath); } }
+		public bool IsDumped { get{ return reputation != REPUTATION_RESTORED; } }
 
 
-		public DumpedFile(string data){
+		public DumpedFile(string data, bool fromData){
 
 		}
 		public DumpedFile(string filePath){
-			this.path = filePath;
+			this.id = filePath.GetHashCode();
+			this.reputation = REPUTATION_RESTORED;
 			this.sourcePath = filePath;
 		}
 
@@ -29,13 +35,13 @@ namespace Fumpster.Files
 			if (IsDumped) {
 
 			} else {
-				path = "";
+				reputation = REPUTATION_DUMPED;
 			}
 		}
 
 		public void Restore(){
 			if (IsDumped) {
-				path = sourcePath;
+				reputation = REPUTATION_RESTORED;
 			} else {
 
 			}
@@ -43,7 +49,7 @@ namespace Fumpster.Files
 
 
 		public override string ToString(){
-
+			return id + ";";
 		}
 	}
 }
