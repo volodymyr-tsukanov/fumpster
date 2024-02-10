@@ -8,7 +8,7 @@ using Fumpster.Security;
 namespace Fumpster
 {
 	/// <summary>
-	/// MainClass (22/01/2024)
+	/// MainClass (10/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	class MainClass {
@@ -17,30 +17,30 @@ namespace Fumpster
 
 		public static void Main(string[] args)
 		{
-			int status;
+			int status = STATUS_DEFAULT;
 			string prevTitle = Console.Title;
 			style();
 
-			Console.WriteLine("Fumster");
+			Console.WriteLine("Fumster\nv.0.1");
 
 			Signature signature = new Signature();
 			if (!signature.Verify()) {
-				//Console.WriteLine("! Program got modifications !");
+				Console.WriteLine("! Program got modifications !");
+				status = STATUS_SECURITY;
 				//Environment.Exit(STATUS_SECURITY);
 			}
 
 			Dumper dumper = new Dumper();
-
-			dumper.DumpFile("1.txt");
-			dumper.DumpFile("1.png");
-			Console.ReadLine();
-			dumper.Restore(new FileInfo("1.txt").FullName);
-
 			if (args.Length == 0) {
-
+				while (status >= STATUS_DEFAULT) {
+					Console.WriteLine("fmp: ");
+					status = command(Console.ReadLine().Split());
+				}
 			} else {
-
+				status = command(args);
 			}
+
+			Environment.Exit(status);
 		}
 
 
@@ -54,6 +54,28 @@ namespace Fumpster
 				Console.Beep(777, 777);
 			}
 		}
+
+		static int command(string[] cmds){
+			int output = STATUS_DEFAULT;
+			try {
+				switch (cmds[0]) {
+				case "?":
+				case "help":
+					Console.WriteLine("commands:");
+					Console.WriteLine("  help / ?\tshow commands list");
+					Console.WriteLine("  dump / d\tmove file to dumper\n    pattern:\t[filePath] [reputation(optional)]");
+
+					break;
+				default:
+					Console.WriteLine("! no such command ! (? for help)");
+					break;
+				}
+			} catch (Exception exc) {
+				Console.WriteLine("! Error: " + exc.Message + " !");
+				output = STATUS_ERROR;
+			}
+			return output;
+		}
 	}
 
 
@@ -63,7 +85,7 @@ namespace Fumpster
 	/// </summary>
 	public class Dumper {
 		short version;
-		string path, fileExtention;
+		string path, fileExtestion;
 		Compressor compressor;
 		List<DumpedFile> files;
 
@@ -73,19 +95,20 @@ namespace Fumpster
 
 		public string Path { get{ return path; } }
 		public Compressor DumperCompressor { get{ return compressor; } }
+		protected internal string FileExtestion { get{ return fileExtestion; } }
 		protected internal List<DumpedFile> DumperFiles { get{ return files; } }
 
 
 		public Dumper(){
 			version = VERSION_ACTUAL;
 			path = PATH_ROOT;
-			fileExtention = EXTENSION_ACTUAL;
+			fileExtestion = EXTENSION_ACTUAL;
 			initialize();
 		}
 		public Dumper(string path){
 			version = VERSION_ACTUAL;
 			this.path = path;
-			fileExtention = EXTENSION_ACTUAL;
+			fileExtestion = EXTENSION_ACTUAL;
 			initialize();
 		}
 
@@ -102,12 +125,13 @@ namespace Fumpster
 				if (!Directory.Exists(path + "/" + PATH_DATA))
 					Directory.CreateDirectory(path + "/" + PATH_DATA);
 				Save();
+				Console.WriteLine("--- initialized ---\n(? - for help)");
 			}
 		}
 
 
 		protected internal void Save(){
-			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Create))
+			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.OpenOrCreate))
 			using (BinaryWriter bw = new BinaryWriter(settings)) {
 				bw.Write(version);
 				if (files.Count == 0)
@@ -115,19 +139,19 @@ namespace Fumpster
 				else {
 					string fls = files[0].ToString();
 					for (int i = 1; i < files.Count; i++)
-						fls += (char) 30 + files[i].ToString();
+						fls += (char)29 + files[i].ToString();
 					bw.Write(fls);
 				}
 			}
 		}
 		protected internal void Load(){
-			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Create))
+			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Open))
 			using (BinaryReader br = new BinaryReader(settings)) {
 				version = br.ReadInt16();
 				string fls = br.ReadString();
 				files.Clear();
 				if (!fls.Equals("NULL"))
-					foreach (string f in fls.Split((char)30)) {
+					foreach (string f in fls.Split((char)29)) {
 						DumpedFile df = new DumpedFile(f, true, this);
 						files.Add(df);
 					}
@@ -139,6 +163,10 @@ namespace Fumpster
 			if (File.Exists(path)) {
 				DumpedFile df = new DumpedFile(path, this);
 				df.Dump();
+			} else {
+				DumpedFile df = files.Find(x => x.Id == path);
+				if (df != null)
+					df.Dump();
 			}
 		}
 

@@ -16,12 +16,12 @@ namespace Fumpster.Files
 		string sourcePath;
 		Dumper dumper;
 
-		protected internal const short REPUTATION_RESTORED = -7018, REPUTATION_DUMPED = 10;
+		protected internal const short REPUTATION_RESTORED = -7018, REPUTATION_DUMPED = 10, REPUTATION_MAX = 100;
 
 		public short Reputation { get{ return reputation; } }
 		public long Id { get{ return id; } }
 		public string SorcePath { get{ return sourcePath; } }
-		public bool IsDumped { get{ return reputation != REPUTATION_RESTORED; } }
+		public bool IsDumped { get{ return reputation > 0; } }
 
 
 		public DumpedFile(string data, bool fromData, Dumper dumper){
@@ -37,6 +37,12 @@ namespace Fumpster.Files
 			this.sourcePath = filePath;
 			this.dumper = dumper;
 		}
+		public DumpedFile(string filePath, short reputation, Dumper dumper){
+			this.id = Math.Abs(filePath.GetHashCode());
+			this.reputation = REPUTATION_RESTORED;
+			this.sourcePath = filePath;
+			this.dumper = dumper;
+		}
 
 
 		public void Dump(){
@@ -45,9 +51,9 @@ namespace Fumpster.Files
 				if (reputation < 1)
 					Delete();
 			} else {
+				reputation = REPUTATION_DUMPED;
 				dumper.DumperCompressor.Compress(this);
 				File.Delete(sourcePath);
-				reputation = REPUTATION_DUMPED;
 				dumper.DumperFiles.Add(this);
 				dumper.Save();
 			}
@@ -80,7 +86,6 @@ namespace Fumpster.Files
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class Compressor {
-		string dataOld, dataNormal, dataNew;
 		Dumper dumper;
 
 
@@ -104,8 +109,8 @@ namespace Fumpster.Files
 
 			using (FileStream input = new FileStream(dumpedFile.SorcePath, FileMode.Open)) {
 				if (percent < 25) { //old
-					if (File.Exists(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL))
-						using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL, FileMode.Append)) {
+					if (File.Exists(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion))
+						using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion, FileMode.Append)) {
 							BinaryWriter bw = new BinaryWriter(output);
 							bw.Write(dumpedFile.Id);
 							bw.Write(input.Length);
@@ -116,7 +121,7 @@ namespace Fumpster.Files
 							bw.Close();
 						}
 					else
-						using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL, FileMode.Create)) {
+						using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion, FileMode.Create)) {
 							BinaryWriter bw = new BinaryWriter(output);
 							bw.Write(dumpedFile.Id);
 							bw.Write(input.Length);
@@ -126,13 +131,13 @@ namespace Fumpster.Files
 								bw.Write(buffer, 0, n);
 							bw.Close();
 						}
-					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL, FileMode.Open))
+					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion, FileMode.Open))
 						CompressFile(input, output, CompressionMode.Compress, CompressionLevel.Optimal);
 				} else if (percent < 60) { //normal
-					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/" + dumpedFile.Id.ToString(), FileMode.OpenOrCreate))
+					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/" + dumpedFile.Id.ToString(), FileMode.Create))
 						CompressFile(input, output, CompressionMode.Compress, CompressionLevel.Fastest);
 				} else { //new
-					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/" + dumpedFile.Id.ToString(), FileMode.OpenOrCreate))
+					using (FileStream output = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/" + dumpedFile.Id.ToString(), FileMode.Create))
 						input.CopyTo(output);
 				}
 			}
@@ -143,8 +148,8 @@ namespace Fumpster.Files
 
 			using (FileStream output = new FileStream(dumpedFile.SorcePath, FileMode.OpenOrCreate)) {
 				if (percent < 25) { //old
-					if (File.Exists(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL)) {
-						using (FileStream input = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_ACTUAL, FileMode.Open))
+					if (File.Exists(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion)) {
+						using (FileStream input = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + dumper.FileExtestion, FileMode.Open))
 						using (FileStream tmp = new FileStream(dumper.Path + "/" + Dumper.PATH_DATA + "/dca" + Dumper.EXTENSION_TEMP, FileMode.Create))
 							CompressFile(input, tmp, CompressionMode.Decompress, CompressionLevel.Optimal);
 					}
