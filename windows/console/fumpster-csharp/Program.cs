@@ -8,12 +8,11 @@ using Fumpster.Security;
 namespace Fumpster
 {
 	/// <summary>
-	/// MainClass (21/01/2024)
+	/// MainClass (22/01/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	class MainClass {
 		const int STATUS_EXIT = -1, STATUS_ERROR = -2, STATUS_DEFAULT = 1, STATUS_SECURITY = 3;
-		const string PATH_LNK = "template-link.fpr";
 
 
 		public static void Main(string[] args)
@@ -31,6 +30,11 @@ namespace Fumpster
 			}
 
 			Dumper dumper = new Dumper();
+
+			dumper.DumpFile("1.txt");
+			dumper.DumpFile("1.png");
+			Console.ReadLine();
+			dumper.Restore(new FileInfo("1.txt").FullName);
 
 			if (args.Length == 0) {
 
@@ -54,81 +58,99 @@ namespace Fumpster
 
 
 	/// <summary>
-	/// Dumper (21/01/2024)
+	/// Dumper (10/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class Dumper {
 		short version;
-		string path;
-		FileStream settings;
+		string path, fileExtention;
+		Compressor compressor;
 		List<DumpedFile> files;
 
 		protected internal const short VERSION_ACTUAL = 1, VERSION_LATEST = 1;
-		protected internal const string PATH_ROOT = "dumper", PATH_FILES = "files", FILE_SETTINGS = "dumper.fpr", PATH_LNK = "template-link.fpr";
+		protected internal const string PATH_ROOT = "dumper", PATH_DATA = "data", FILE_SETTINGS = "dumper.fpr",
+										EXTENSION_ACTUAL = ".fmr", EXTENSION_TEMP = ".tmp";
 
 		public string Path { get{ return path; } }
+		public Compressor DumperCompressor { get{ return compressor; } }
+		protected internal List<DumpedFile> DumperFiles { get{ return files; } }
 
 
 		public Dumper(){
 			version = VERSION_ACTUAL;
 			path = PATH_ROOT;
-			files = new List<DumpedFile>();
-
-			if (!File.Exists(path + "/" + FILE_SETTINGS))
-				initialize();
+			fileExtention = EXTENSION_ACTUAL;
+			initialize();
 		}
 		public Dumper(string path){
 			version = VERSION_ACTUAL;
 			this.path = path;
-			files = new List<DumpedFile>();
-
-			if (!File.Exists(path + "/" + FILE_SETTINGS))
-				initialize();
+			fileExtention = EXTENSION_ACTUAL;
+			initialize();
 		}
 
 
 		void initialize(){
-			if (!Directory.Exists(path))
-				Directory.CreateDirectory(path);
-			if (!Directory.Exists(path + "/" + PATH_FILES))
-				Directory.CreateDirectory(path + "/" + PATH_FILES);
+			compressor = new Compressor(this);
+			files = new List<DumpedFile>();
 
-			string linkPath = "";
-			Console.WriteLine("Create shortcut for 'fumper.exe', open it`s properties and insert '$fumpster$' (without ') in comment field of this shortcut");
-			while (String.IsNullOrEmpty(linkPath)) {
-				Console.Write("Paste path to shortcut here: ");
-				linkPath = Console.ReadLine();
-				if (!File.Exists(linkPath)) {
-					Console.WriteLine("No such link: " + linkPath);
-					linkPath = "";
-				} else {
-					/*if (!File.ReadAllText(linkPath).Contains("Ї")) {
-						Console.WriteLine("No 'Ї' found in comments");
-						linkPath = "";
-					}*/
+			if (File.Exists(path + "/" + FILE_SETTINGS))
+				Load();
+			else {
+				if (!Directory.Exists(path))
+					Directory.CreateDirectory(path);
+				if (!Directory.Exists(path + "/" + PATH_DATA))
+					Directory.CreateDirectory(path + "/" + PATH_DATA);
+				Save();
+			}
+		}
+
+
+		protected internal void Save(){
+			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Create))
+			using (BinaryWriter bw = new BinaryWriter(settings)) {
+				bw.Write(version);
+				if (files.Count == 0)
+					bw.Write("NULL");
+				else {
+					string fls = files[0].ToString();
+					for (int i = 1; i < files.Count; i++)
+						fls += (char) 30 + files[i].ToString();
+					bw.Write(fls);
 				}
 			}
-			File.WriteAllBytes(path + "/" + PATH_LNK, File.ReadAllBytes(linkPath));
-
-			settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Create);
-			BinaryWriter bw = new BinaryWriter(settings);
-			bw.Write(version);
-			bw.Close();
+		}
+		protected internal void Load(){
+			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Create))
+			using (BinaryReader br = new BinaryReader(settings)) {
+				version = br.ReadInt16();
+				string fls = br.ReadString();
+				files.Clear();
+				if (!fls.Equals("NULL"))
+					foreach (string f in fls.Split((char)30)) {
+						DumpedFile df = new DumpedFile(f, true, this);
+						files.Add(df);
+					}
+			}
 		}
 
 
 		public void DumpFile(string path){
 			if (File.Exists(path)) {
-				DumpedFile df = new DumpedFile(path);
-				files.Add(df);
+				DumpedFile df = new DumpedFile(path, this);
+				df.Dump();
 			}
 		}
 
 		public void Restore(long fileId){
-
+			DumpedFile df = files.Find(x => x.Id == fileId);
+			if (df != null)
+				df.Restore();
 		}
 		public void Restore(string path){
-
+			DumpedFile df = files.Find(x => path.Equals(x.SorcePath));
+			if (df != null)
+				df.Restore();
 		}
 	}
 }

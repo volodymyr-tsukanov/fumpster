@@ -1,11 +1,11 @@
 ﻿<Properties StartupItem="fumpster-csharp.csproj">
   <AuthorInfo Name="Volodymyr Tsukanov" Email="https://github.com/volodymyr-tsukanov" Copyright="Volodymyr Tsukanov" Company="" Trademark="" />
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Security.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Program.cs">
     <Files>
-      <File FileName="Program.cs" Line="20" Column="10" />
-      <File FileName="Files.cs" Line="52" Column="20" />
-      <File FileName="Security.cs" Line="29" Column="6" />
+      <File FileName="Program.cs" Line="67" Column="11" />
+      <File FileName="Files.cs" Line="1" Column="1" />
+      <File FileName="Security.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
