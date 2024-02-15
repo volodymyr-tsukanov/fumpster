@@ -8,11 +8,13 @@ using Fumpster.Security;
 namespace Fumpster
 {
 	/// <summary>
-	/// MainClass (10/02/2024)
+	/// MainClass (15/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	class MainClass {
 		const int STATUS_EXIT = -1, STATUS_ERROR = -2, STATUS_DEFAULT = 1, STATUS_SECURITY = 3;
+
+		static Dumper dumper;
 
 
 		public static void Main(string[] args)
@@ -30,10 +32,10 @@ namespace Fumpster
 				//Environment.Exit(STATUS_SECURITY);
 			}
 
-			Dumper dumper = new Dumper();
+			dumper = new Dumper();
 			if (args.Length == 0) {
 				while (status >= STATUS_DEFAULT) {
-					Console.WriteLine("fmp: ");
+					Console.Write("fmp: ");
 					status = command(Console.ReadLine().Split());
 				}
 			} else {
@@ -57,6 +59,7 @@ namespace Fumpster
 
 		static int command(string[] cmds){
 			int output = STATUS_DEFAULT;
+			long l;
 			try {
 				switch (cmds[0]) {
 				case "?":
@@ -65,6 +68,21 @@ namespace Fumpster
 					Console.WriteLine("  help / ?\tshow commands list");
 					Console.WriteLine("  dump / d\tmove file to dumper\n    pattern:\t[filePath] [reputation(optional)]");
 
+					break;
+				case "dump":
+					Console.WriteLine("Dumping file...");
+					if(long.TryParse(cmds[1], out l)) dumper.DumpFile(l);
+					else dumper.DumpFile(cmds[1]);
+					break;
+				case "restore":
+					Console.WriteLine("Restoring file...");
+					if(long.TryParse(cmds[1], out l)) dumper.RestoreFile(l);
+					else dumper.RestoreFile(cmds[1]);
+					break;
+				case "print":
+					Console.WriteLine("Printing dumped files:");
+					foreach(DumpedFile df in dumper.DumperFiles)
+						Console.WriteLine("Id:" + df.Id + "\tRep:" + df.Reputation + "\tRepM:" + df.ReputationMax + "\tSource:" + df.SorcePath + "\tStatus:" + df.ReputationStatus);
 					break;
 				default:
 					Console.WriteLine("! no such command ! (? for help)");
@@ -80,7 +98,7 @@ namespace Fumpster
 
 
 	/// <summary>
-	/// Dumper (10/02/2024)
+	/// Dumper (15/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class Dumper {
@@ -159,26 +177,63 @@ namespace Fumpster
 		}
 
 
-		public void DumpFile(string path){
-			if (File.Exists(path)) {
-				DumpedFile df = new DumpedFile(path, this);
+		public bool DumpFile(long fileId){
+			DumpedFile df = files.Find(x => x.Id == fileId);
+			if (df != null) {
 				df.Dump();
-			} else {
-				DumpedFile df = files.Find(x => x.Id == path);
-				if (df != null)
-					df.Dump();
+				Save();
+				return true;
 			}
+			return false;
+		}
+		public bool DumpFile(string path){
+			if (path.EndsWith(EXTENSION_ACTUAL)) {
+				long id = long.Parse(File.ReadAllText(path));
+				return DumpFile(id);
+			} else {
+				DumpedFile df = files.Find(x => x.SorcePath == path);
+				if (df != null) {
+					df.Dump();
+				} else {
+					df = new DumpedFile(path, this);
+					df.Dump();
+					files.Add(df);
+					File.Delete(path);
+				}
+				Save();
+				return true;
+			}
+			return false;
 		}
 
-		public void Restore(long fileId){
+		public bool RestoreFile(long fileId){
 			DumpedFile df = files.Find(x => x.Id == fileId);
-			if (df != null)
+			if (df != null) {
 				df.Restore();
+				files.Remove(df);
+				Save();
+				return true;
+			}
+			return false;
 		}
-		public void Restore(string path){
+		public bool RestoreFile(string path){
 			DumpedFile df = files.Find(x => path.Equals(x.SorcePath));
-			if (df != null)
+			if (df != null) {
 				df.Restore();
+				files.Remove(df);
+				Save();
+				return true;
+			}
+			return false;
+		}
+
+		public bool DeleteFile(long fileId){
+			DumpedFile df = files.Find(x => x.Id == fileId);
+			if (df != null) {
+				df.Delete();
+				return true;
+			}
+			return false;
 		}
 	}
 }
