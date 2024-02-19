@@ -8,7 +8,7 @@ using Fumpster.Security;
 namespace Fumpster
 {
 	/// <summary>
-	/// MainClass (15/02/2024)
+	/// MainClass (19/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	class MainClass {
@@ -58,6 +58,7 @@ namespace Fumpster
 		}
 
 		static int command(string[] cmds){
+			bool b;
 			int output = STATUS_DEFAULT;
 			long l;
 			try {
@@ -70,14 +71,14 @@ namespace Fumpster
 
 					break;
 				case "dump":
-					Console.WriteLine("Dumping file...");
-					if(long.TryParse(cmds[1], out l)) dumper.DumpFile(l);
-					else dumper.DumpFile(cmds[1]);
+					if(long.TryParse(cmds[1], out l)) b = dumper.DumpFile(l);
+					else b = dumper.DumpFile(cmds[1]);
+					Console.WriteLine(b);
 					break;
 				case "restore":
-					Console.WriteLine("Restoring file...");
-					if(long.TryParse(cmds[1], out l)) dumper.RestoreFile(l);
-					else dumper.RestoreFile(cmds[1]);
+					if(long.TryParse(cmds[1], out l)) b = dumper.RestoreFile(l);
+					else b = dumper.RestoreFile(cmds[1]);
+					Console.WriteLine(b);
 					break;
 				case "print":
 					Console.WriteLine("Printing dumped files:");
@@ -98,10 +99,11 @@ namespace Fumpster
 
 
 	/// <summary>
-	/// Dumper (15/02/2024)
+	/// Dumper (19/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class Dumper {
+		bool debug;
 		short version;
 		string path, fileExtestion;
 		Compressor compressor;
@@ -111,6 +113,7 @@ namespace Fumpster
 		protected internal const string PATH_ROOT = "dumper", PATH_DATA = "data", FILE_SETTINGS = "dumper.fpr",
 										EXTENSION_ACTUAL = ".fmr", EXTENSION_TEMP = ".tmp";
 
+		public bool Debug { get{ return debug; } set{ debug = value; } }
 		public string Path { get{ return path; } }
 		public Compressor DumperCompressor { get{ return compressor; } }
 		protected internal string FileExtestion { get{ return fileExtestion; } }
@@ -118,12 +121,14 @@ namespace Fumpster
 
 
 		public Dumper(){
+			debug = true;
 			version = VERSION_ACTUAL;
 			path = PATH_ROOT;
 			fileExtestion = EXTENSION_ACTUAL;
 			initialize();
 		}
 		public Dumper(string path){
+			debug = true;
 			version = VERSION_ACTUAL;
 			this.path = path;
 			fileExtestion = EXTENSION_ACTUAL;
@@ -149,7 +154,7 @@ namespace Fumpster
 
 
 		protected internal void Save(){
-			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.OpenOrCreate))
+			using (FileStream settings = new FileStream(path + "/" + FILE_SETTINGS, FileMode.Open))
 			using (BinaryWriter bw = new BinaryWriter(settings)) {
 				bw.Write(version);
 				if (files.Count == 0)
@@ -178,19 +183,25 @@ namespace Fumpster
 
 
 		public bool DumpFile(long fileId){
+			if(debug) Console.Write("Dumping file by id " + fileId);
 			DumpedFile df = files.Find(x => x.Id == fileId);
 			if (df != null) {
+				if(debug) Console.Write(" -> file has been already dumped");
 				df.Dump();
 				Save();
+				if(debug) Console.Write(" >>> ");
 				return true;
 			}
 			return false;
 		}
 		public bool DumpFile(string path){
+			if(debug) Console.Write("Dumping file by path " + path);
 			if (path.EndsWith(EXTENSION_ACTUAL)) {
+				if(debug) Console.Write(" -> fumpster file -> trying to find file by id >> ");
 				long id = long.Parse(File.ReadAllText(path));
 				return DumpFile(id);
 			} else {
+				if(debug) Console.Write(" -> creating new dumped file");
 				DumpedFile df = files.Find(x => x.SorcePath == path);
 				if (df != null) {
 					df.Dump();
@@ -201,16 +212,18 @@ namespace Fumpster
 					File.Delete(path);
 				}
 				Save();
+				if(debug) Console.Write(" >>> ");
 				return true;
 			}
 			return false;
 		}
 
 		public bool RestoreFile(long fileId){
+			if(debug) Console.Write("Restoring file by id");
 			DumpedFile df = files.Find(x => x.Id == fileId);
 			if (df != null) {
 				df.Restore();
-				files.Remove(df);
+				Console.WriteLine("restore dl:" + files.Remove(df));
 				Save();
 				return true;
 			}
@@ -220,7 +233,7 @@ namespace Fumpster
 			DumpedFile df = files.Find(x => path.Equals(x.SorcePath));
 			if (df != null) {
 				df.Restore();
-				files.Remove(df);
+				Console.WriteLine("restore dl:" + files.Remove(df));
 				Save();
 				return true;
 			}
@@ -228,6 +241,7 @@ namespace Fumpster
 		}
 
 		public bool DeleteFile(long fileId){
+			if(debug) Console.Write("Deleting file by id");
 			DumpedFile df = files.Find(x => x.Id == fileId);
 			if (df != null) {
 				df.Delete();

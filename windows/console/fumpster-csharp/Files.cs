@@ -7,7 +7,7 @@ using Fumpster;
 namespace Fumpster.Files
 {
 	/// <summary>
-	/// DumpedFile (14/02/2024)
+	/// DumpedFile (19/02/2024)
 	/// by Volodymyr Tsukanov
 	/// </summary>
 	public class DumpedFile {
@@ -22,7 +22,7 @@ namespace Fumpster.Files
 
 		public short Reputation { get{ return reputation; } }
 		public short ReputationMax { get{ return reputation_max; } set{ reputation_max = value <= REPUTATION_MAX ? value : REPUTATION_MAX; } }
-		public int ReputationPercent { get{ return reputation / reputation_max * 100; } }
+		public int ReputationPercent { get{ return (int)((float)(reputation) / reputation_max * 100); } }
 		public Status ReputationStatus { get{ return status; } }
 		public long Id { get{ return id; } }
 		public string SorcePath { get{ return sourcePath; } }
@@ -33,7 +33,7 @@ namespace Fumpster.Files
 			string[] s = data.Split(';');
 			id = long.Parse(s[0]);
 			reputation = short.Parse(s[1]);
-			ReputationMax = short.Parse(s[2]);
+			reputation_max = short.Parse(s[2]);
 			sourcePath = s[3];
 			status = (Status)int.Parse(s[4]);
 			this.dumper = dumper;
