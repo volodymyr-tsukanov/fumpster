@@ -1,10 +1,9 @@
 # Templates
-File dumpster</br></br>
+File dumpster <br><br>
 
+Shields: [![BSD 3-Clause License][bsd-shield]][bsd]
 
-Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
+[bsd]: https://opensource.org/licenses/BSD-3-Clause
+[bsd-shield]: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
 
-[cc-by-nc]: http://creativecommons.org/licenses/by-nc/4.0/
-[cc-by-nc-shield]: https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg
-
-<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
+<a rel="license" href="https://spdx.org/licenses/BSD-3-Clause.html"><img alt="BSD 3-Clause License" height=47px style="border-width:0" src="https://simpleicons.org/icons/bsd.svg" /></a><br>This work is licensed under the <a rel="license" href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a>.
