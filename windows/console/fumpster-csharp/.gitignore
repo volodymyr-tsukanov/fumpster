@@ -1,9 +1,0 @@
-# Extentions
-*.pdb
-
-# Folders
-bin/**
-obj/**
-
-# Files
-Security.cs
