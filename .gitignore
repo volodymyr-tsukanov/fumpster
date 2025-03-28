@@ -1,0 +1,9 @@
+# EXTENSIONS
+## OS generated files
+.DS_Store
+Thumbs.db
+
+## backup files
+*~
+*.bak
+*.*swp
