@@ -1,6 +1,8 @@
 #include <iostream>
+#include "Files.h"
 
 using namespace std;
+using namespace Fumpster;
 
 
 int main()
